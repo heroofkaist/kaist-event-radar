@@ -53,7 +53,6 @@ export const registry = {
     board('mlh','https://www.mlh.com/seasons/'+(new Date().getUTCFullYear()+(new Date().getUTCMonth()>=6?1:0))+'/events',/./,{external:true,format:'mlh',kind:'hackathon',max:3}),
     board('devhunt','https://devhunt.org/hackathons/online',/./,{external:true,official:false,format:'devhunt',kind:'hackathon',max:3}),
     spec('claude-online','https://claude.com/community','claude',{official:true,max:3}),
-    spec('yc','https://www.ycombinator.com/apply','yc',{official:true,kind:'startup'}),
     search('online-search-agents','online hackathon AI agents (AWS OR Google OR Microsoft OR NVIDIA OR Anthropic) registration','en-US'),
     search('online-search-quant','online student (robotics OR hardware OR quant OR startup) hackathon open application','en-US'),
   ],

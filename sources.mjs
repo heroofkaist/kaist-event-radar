@@ -44,7 +44,7 @@ const startup = /start[\s-]?up (?:battle|competition|pitch|cup|accelerat|grant|p
 const research = /(?:research|lab|연구|интерн|зерттеу).{0,35}(?:intern|experience|recruit|assistant|모집|체험)|인턴십|externship|исследовательск.*стажиров/i;
 const seminar = /seminar|colloquium|conference|symposium|lecture|포럼|세미나|강연|심포지엄|컨퍼런스|콜로키움|семинар|лекция|конференц/i;
 const club = /student club|club recruit|동아리|студенческ.{0,20}клуб/i;
-const agents = /\b(?:agentic|ai agents?|claude code|codex|mcp|rag|llm|devin)\b|에이전트|ии.агент/i;
+const agents = /\b(?:agentic|ag[eé]ntic[oa]|(?:ai|developer|coding) agents?|claude code|codex|mcp|rag|llm|devin)\b|에이전트|ии.агент/i;
 const ai = /\b(?:ai|machine learning|deep learning|neural|multimodal)\b|인공지능|머신러닝|искусственн.{0,7} интеллект|\bИИ\b|жасанды интеллект/i;
 const quantum = /quantum|qubit|graphene|photon|condensed matter|superconduct|physics|nobel|양자|광자|квант/i;
 const hardware = /robot|hardware|semiconductor|embedded|electronics|iot|drone|chip|uav|반도체|로봇|드론|робот|железо/i;
@@ -226,7 +226,7 @@ function eventReady(region, source, record, candidate, now) {
   if (!topic.kinds.length || (source.adapter==='rss' && !record.start && !record.deadline)) return null;
   const title = record.title.trim().slice(0,240);
   const location = record.location ?? source.location ?? null;
-  if (region==='online' && !record.virtual && !record.remoteApply) return null;
+  if (region==='online' && !record.virtual) return null;
   if (region==='kz' && ['rss','claude'].includes(source.adapter) && !kzCities.test(location??'') && !kzCities.test(title) && record.country!=='KZ') return null;
   if (region==='korea' && ['rss','claude'].includes(source.adapter) && !krCities.test(location??'') && !krCities.test(title) && record.country!=='KR') return null;
   if (region==='kaist' && source.adapter==='rss' && !/kaist|카이스트|한국과학기술원/i.test(title+' '+(record.description??'')+' '+url)) return null;
@@ -400,7 +400,8 @@ function fromText(html,url,source,candidate,now) {
   if (source.format==='business') title = clean(tag(content,'b')) || candidate.title;
   if (source.format==='maths') title = clean(content.match(/<td\b[^>]*>\s*제목\s*<\/td>\s*<td\b[^>]*>([\s\S]*?)<\/td>/i)?.[1]) || candidate.title;
   if (source.format==='campus') title = clean(content.match(/<strong class="ui-list__title">([\s\S]*?)<\/strong>/i)?.[1]) || candidate.title;
-  const snippet = descriptionOf(html);
+  const abstract = source.format==='maths' ? clean(content.match(/<td\b[^>]*>\s*Abstract\s*<\/td>\s*<td\b[^>]*>([\s\S]*?)<\/td>/i)?.[1]) : '';
+  const snippet = abstract || descriptionOf(html);
   let [start,end] = field(body,eventLabels);
   if (source.format==='campus') {
     start ??= candidate.start;
@@ -566,22 +567,6 @@ function organizerSessions(html,base) {
   return out;
 }
 
-function accelerator(html,url,now) {
-  const content = tag(html,'article');
-  const lines = bodyText(content);
-  const batch = lines.match(/accepting applications for the ([A-Za-z]+ 20\d{2}) Batch/i)?.[1];
-  if (!batch) return [];
-  const link = links(content,url).find(x=>x.url && new URL(x.url).hostname==='apply.ycombinator.com');
-  const period = field(lines,/(?:on-time deadline|deadline to apply|apply by)/i);
-  const late = /(?:you can still apply|accept(?:ing)? late applications|late applications)/i.test(lines);
-  const deadline = period[0];
-  const missed = Boolean(deadline && (deadline.at??Date.parse(deadline.day+'T23:59:59Z'))<=now);
-  // The deadline published for an on-time decision does not close late applications.
-  return [{title:'Y Combinator · '+batch+' Batch',url,apply:link?.url??null,
-    description:lines.slice(0,800),location:/San Francisco/i.test(lines)?'Сан-Франциско · заявка онлайн':null,
-    deadline:missed&&late?null:deadline,remoteApply:Boolean(link),status:link&&(!missed||late)?'open':'unknown'}];
-}
-
 const MAX_FETCHES = 45;
 const MAX_BYTES = 1_750_000;
 const CONCURRENCY = 5;
@@ -651,8 +636,8 @@ export async function scanRegion(region,{now=Date.now(), sources=registry[region
   const listings = await limited(sources,async source=>{
     try {
       const {html,finalUrl} = await readPage(fetcher,source.url,budget);
-      if (source.adapter==='computing' || source.adapter==='yc') {
-        const records = source.adapter==='yc'?accelerator(html,finalUrl,now):organizerSessions(html,finalUrl);
+      if (source.adapter==='computing') {
+        const records = organizerSessions(html,finalUrl);
         for (const record of records) {
           const opportunity = eventReady(region,source,record,null,now);
           if (opportunity) events.push(opportunity);
@@ -681,7 +666,7 @@ export async function scanRegion(region,{now=Date.now(), sources=registry[region
   for (const entry of previous) {
     const source = sources.find(item=>item.id===entry.source);
     const key = canonical(entry.url);
-    if (!source || !key || seen.has(key) || ['yc','computing'].includes(source.adapter)) continue;
+    if (!source || !key || seen.has(key) || source.adapter==='computing') continue;
     revisits.push({source,entry});
     seen.add(key);
     if (revisits.length>=3) break;
