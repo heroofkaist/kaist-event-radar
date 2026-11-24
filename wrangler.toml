@@ -1,6 +1,18 @@
 name = "kaist-event-radar"
 main = "worker.mjs"
 compatibility_date = "2026-11-24"
+keep_vars = true
 
 [triggers]
 crons = ["0 0 * * *"]
+
+[[durable_objects.bindings]]
+name = "RADAR"
+class_name = "RadarStore"
+
+[[migrations]]
+tag = "radar-storage-v1"
+new_sqlite_classes = ["RadarStore"]
+
+[observability]
+enabled = true

@@ -20,10 +20,10 @@ async function telegram(method, payload) {
 const commands = [
   ["scan", "Свежий дайджест"], ["kaist", "События KAIST"],
   ["korea", "Южная Корея"], ["kz", "Казахстан"], ["online", "Онлайн"],
-  ["hackathons", "Хакатоны"], ["startups", "Стартап-конкурсы"],
-  ["deadlines", "Ближайшие дедлайны"], ["help", "Показать кнопки"],
+  ["hackathons", "Хакатоны"], ["startups", "Стартап-возможности"],
+  ["deadlines", "Дедлайны подачи"], ["help", "Показать кнопки"],
 ];
-await telegram("setWebhook", {url: new URL("/telegram", worker).href, secret_token: secret});
+await telegram("setWebhook", {url: new URL("/telegram", worker).href, secret_token: secret, allowed_updates: ["message", "callback_query"]});
 await telegram("setMyCommands", {
   scope: {type: "all_private_chats"},
   commands: commands.map(([command, description]) => ({command, description})),

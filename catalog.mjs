@@ -1,0 +1,59 @@
+const spec = (id,url,adapter,options={})=>({id,url,adapter,...options});
+const board = (id,url,pattern,options={})=>spec(id,url,'board',{pattern,official:true,...options});
+const gdg = (slug,location)=>spec('gdg-'+slug,'https://gdg.community.dev/gdg-'+slug+'/','gdg',{official:true,location,max:2});
+const search = (id,query,market)=>spec(id,'https://www.bing.com/news/search?'+new URLSearchParams({format:'rss',q:query,setlang:market}),'rss',{max:2});
+
+export const registry = {
+  kaist:[
+    board('physics','https://physics.kaist.ac.kr/p_news_event3',/\/p_news_event3\/\d+$/, {format:'physics',max:4,kind:'seminar'}),
+    board('physics-recruiting','https://physics.kaist.ac.kr/p_news_event1',/\/p_news_event1\/\d+$/, {max:2}),
+    board('ee-seminars','https://ee.kaist.ac.kr/seminar/',/\/seminars\/[^/]+\/$/, {format:'ee',max:3,kind:'seminar'}),
+    board('ee-recruiting','https://ee.kaist.ac.kr/notice/',/\/notices\/[^/]+\/$/, {format:'ee',max:2}),
+    board('startup-kaist','https://startup.kaist.ac.kr/boards/lists/board_event',/\/boards\/(?:chk_view|view)\/board_event\/\d+$/, {format:'startup',max:2}),
+    board('startup-external','https://startup.kaist.ac.kr/boards/lists/board_outside',/\/boards\/(?:chk_view|view)\/board_outside\/\d+$/, {format:'startup',max:2}),
+    board('campus','https://kaist.ac.kr/site/kr/html/campus/053501.html?list_gubun=A',/053501\.html\?[^#]*mng_no=\d+/, {format:'campus',max:4}),
+    board('seoul-campus','https://www.business.kaist.ac.kr/_prog/seminar/?site_dvs_cd=en&menu_dvs_cd=060202&func_dvs_cd=seminar&mode=L',/\/_prog\/seminar\/[^?]*\?[^#]*mng_no=\d+/, {format:'business',location:'Сеул · KAIST',max:3,kind:'seminar'}),
+    spec('computing','https://cs.kaist.ac.kr/colloquium/info.php','computing',{official:true,kind:'seminar',location:'Тэджон · KAIST'}),
+    board('maths','https://mathsci.kaist.ac.kr/home/schedules/seminar/?key_event=00',/\/ko\/schedule\/scView\.php\?idx=-?\d+/, {format:'maths',kind:'seminar',location:'Тэджон · KAIST',max:5}),
+    board('clubs-union','https://linktr.ee/clubsunion',/^\/[^/]+$/, {external:true,host:/^forms\.gle$/,format:'club',max:2,kind:'club'}),
+    search('kaist-search-ko','카이스트 (동아리 모집 OR 연구 인턴 OR 세미나 OR 창업) (대전 OR 서울)','ko-KR'),
+    search('kaist-search-en','KAIST (student club recruitment OR research internship OR seminar OR startup event)','en-US'),
+  ],
+  korea:[
+    spec('hackathon-korea','https://koreahackathons.com/en/','schema',{max:8}),
+    spec('seoul-calendar','https://luma.com/seoul','schema',{official:true,max:8}),
+    spec('k-startup','https://www.k-startup.go.kr/web/contents/bizpbanc-ongoing.do','kstartup',{official:true,max:6}),
+    gdg('daejeon','Тэджон'), gdg('pangyo','Пангё'),
+    board('onoffmix','https://www.onoffmix.com/event/main/?interest=A0103',/\/event\/\d+$/, {format:'onoff',max:4}),
+    board('event-us','https://event-us.kr/search?keyword='+encodeURIComponent('해커톤'),/\/[^/]+\/event\/\d+$/, {max:3}),
+    spec('claude-korea','https://claude.com/community','claude',{official:true, max:3}),
+    search('korea-search-ko','(대전 OR 서울 OR 판교 OR 부산) (해커톤 OR 창업경진대회 OR 기술 세미나 OR 지원사업) 참가 모집','ko-KR'),
+    search('korea-search-en','(Daejeon OR Seoul OR Pangyo OR Busan) (hackathon OR startup accelerator OR tech event) registration','en-US'),
+  ],
+  kz:[
+    spec('hackalem','https://edu.astanahub.com/hackathons','hackalem',{official:true,kind:'hackathon',max:3}),
+    gdg('astana','Астана'), gdg('almaty','Алматы'), gdg('aktobe','Актобе'),
+    spec('claude-kz','https://claude.com/community','claude',{official:true,max:5}),
+    board('national-festival','https://itfest.kz/',/^\/[a-z][a-z-]+\/$/, {format:'itfest',location:'Астана',max:7}),
+    board('nazarbayev','https://nu.edu.kz/inf-media/events-page/',/\/eventsm\/[^/]+\/$/, {max:5}),
+    board('almaty-calendar','https://sxodim.com/almaty',/\/almaty\/event\/[^/]+$/, {format:'themed',location:'Алматы',max:2}),
+    board('astana-calendar','https://sxodim.com/astana',/\/astana\/event\/[^/]+$/, {format:'themed',location:'Астана',max:2}),
+    search('kazakhstan-search-kk','Қазақстан (Алматы OR Астана OR Ақтөбе) хакатон стартап байқау өтінім тіркелу','kk-KZ'),
+    search('kazakhstan-search-ru','Казахстан (Астана OR Алматы OR Актобе OR региональный хаб) (хакатон OR стартап OR акселератор) регистрация','ru-RU'),
+    search('kazakhstan-search-en','Kazakhstan (Astana Hub OR Almaty OR Aktobe) hackathon startup tech event apply','en-US'),
+  ],
+  online:[
+    spec('devpost','https://devpost.com/api/hackathons?challenge_type%5B%5D=online&status%5B%5D=open','devpost',{max:11}),
+    spec('devpost-more','https://devpost.com/api/hackathons?challenge_type%5B%5D=online&status%5B%5D=open&page=2','devpost',{max:5}),
+    board('apart','https://apartresearch.com/sprints/all',/^\/sprints\/[^/]+$/, {format:'apart',kind:'hackathon',max:4}),
+    board('ai-hackathon-calendar','https://aihackathon.app/',/^\/e\/[^/]+\/$/, {format:'aical',official:false,max:6}),
+    board('devpost-ai','https://devpost.com/c/artificial-intelligence',/^\/$/, {external:true,host:/^[^.]+\.devpost\.com$/,max:5,kind:'hackathon'}),
+    board('buildjams','https://jams.shippedby.app/online-ai-hackathons/',/\/events\/[^/]+\/$/, {official:false,kind:'hackathon',max:8}),
+    board('starfield','https://starfieldlabs.ai/ai-hackathons',/\/ai-hackathons\/[^/]+$/, {max:3,kind:'hackathon'}),
+    board('mlh','https://www.mlh.com/seasons/'+(new Date().getUTCFullYear()+(new Date().getUTCMonth()>=6?1:0))+'/events',/./,{external:true,format:'mlh',kind:'hackathon',max:3}),
+    board('devhunt','https://devhunt.org/hackathons/online',/./,{external:true,official:false,format:'devhunt',kind:'hackathon',max:3}),
+    spec('claude-online','https://claude.com/community','claude',{official:true,max:3}),
+    search('online-search-agents','online hackathon AI agents (AWS OR Google OR Microsoft OR NVIDIA OR Anthropic) registration','en-US'),
+    search('online-search-quant','online student (robotics OR hardware OR quant OR startup) hackathon open application','en-US'),
+  ],
+};
